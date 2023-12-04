@@ -1,7 +1,15 @@
 
+import 'dart:collection';
+
+import 'package:fl_animated_linechart/chart/chart_line.dart';
+import 'package:fl_animated_linechart/chart/chart_point.dart';
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart' as sensors;
 import 'dart:math' as math;
+
+import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:syncfusion_flutter_charts/sparkcharts.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -53,11 +61,20 @@ class _MyHomePageState extends State<MyHomePage> {
 
   double textShownOnScreenDown = 0.0;
   double rotationX = 0.0, rotationY = 0.0 , rotationZ = 0.0;
+
+  List<double> xSamplesList = [];
+  List<double> ySamplesList = [1 , 2 , 0];
+  List<double> zSamplesList = [1 , 2 , 0];
+
+  List<_ChartData>? _chartData;
+
+
+
   @override
   void initState() {
 
     super.initState();
-
+    _fillChartData();
     sensors.accelerometerEventStream().listen((event) {
       setState(() {
         textShownOnScreenDown = math.sqrt(
@@ -68,18 +85,52 @@ class _MyHomePageState extends State<MyHomePage> {
       );
     });
 
-    sensors.gyroscopeEventStream().listen((event) {
+    sensors.gyroscopeEventStream(samplingPeriod: const Duration(microseconds: 10)).listen((event) {
       setState(() {
-        rotationX = event.x;
-        rotationY = event.y;
-        rotationZ = event.z;
+        rotationX += event.x;
+        rotationY += event.y;
+        rotationZ += event.z;
+        //_fillChartData();
+         //xSamplesList[];
+        // ySamplesList.add(rotationY);
+        // zSamplesList.add(rotationZ);
+        //
+        // if(xSamplesList.length >= 500) {
+        //   xSamplesList.removeAt(0);
+        // }
+
+        // if(ySamplesList.length >= 500) {
+        //   ySamplesList.removeAt(0);
+        // }
+        //
+        // if(zSamplesList.length >= 500) {
+        //   zSamplesList.removeAt(0);
+        // }
       }
       );
     });
+    
+
 
 
   }
+  List<LineSeries<_ChartData, num>> _getDefaultLineSeries(){
+    return <LineSeries<_ChartData,num>> [
+      LineSeries<_ChartData,num>(dataSource: _chartData! ,
+          xValueMapper: (_ChartData D, _) => D.x ,
+          yValueMapper: (_ChartData D, _) => D.y)
 
+    ];
+  }
+
+  void _fillChartData(){
+    math.Random r = math.Random();
+    _chartData = <_ChartData>[];
+    _chartData!.clear();
+    for(int i = 0; i <11; i++){
+      _chartData!.add(_ChartData(i, r.nextDouble()));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,6 +166,11 @@ class _MyHomePageState extends State<MyHomePage> {
           // horizontal).
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+
+            SfCartesianChart(
+              primaryXAxis: NumericAxis(),
+              series: _getDefaultLineSeries(),
+            ),
             Text(
               "x: ${rotationX.toStringAsFixed(4)}, "
                   " y: ${rotationY.toStringAsFixed(4)},"
@@ -131,4 +187,17 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+
+
+
+}
+
+
+
+
+class _ChartData {
+  _ChartData(this.x,this.y);
+
+  final int x;
+  final double y;
 }
