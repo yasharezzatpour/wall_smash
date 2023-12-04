@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart' as sensors;
+import 'dart:math' as math;
 void main() {
   runApp(const MyApp());
 }
@@ -49,31 +50,36 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-  sensors.AccelerometerEvent? _accelerometerEvent;
+
+  double textShownOnScreenDown = 0.0;
+  double rotationX = 0.0, rotationY = 0.0 , rotationZ = 0.0;
   @override
   void initState() {
 
     super.initState();
 
-    sensors.accelerometerEvents.listen((event) {
+    sensors.accelerometerEventStream().listen((event) {
       setState(() {
-        _accelerometerEvent = event;
+        textShownOnScreenDown = math.sqrt(
+                event.x * event.x +
+                event.y * event.y +
+                event.z * event.z);
       }
       );
     });
-  }
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
 
+    sensors.gyroscopeEventStream().listen((event) {
+      setState(() {
+        rotationX = event.x;
+        rotationY = event.y;
+        rotationZ = event.z;
+      }
+      );
     });
+
+
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -109,21 +115,20 @@ class _MyHomePageState extends State<MyHomePage> {
           // horizontal).
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+            Text(
+              "x: ${rotationX.toStringAsFixed(4)}, "
+                  " y: ${rotationY.toStringAsFixed(4)},"
+                  "  z: ${rotationZ.toStringAsFixed(4)}"
             ),
             Text(
-              _accelerometerEvent?.x.toStringAsFixed(3) ?? 'eshanki',
+              //_accelerometerEvent?.x.toStringAsFixed(3) ?? 'eshanki',
+              textShownOnScreenDown.toStringAsFixed(3),
               style: Theme.of(context).textTheme.headlineMedium,
             ),
+
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
