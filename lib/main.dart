@@ -1,14 +1,13 @@
 
-import 'dart:collection';
 
-import 'package:fl_animated_linechart/chart/chart_line.dart';
-import 'package:fl_animated_linechart/chart/chart_point.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart' as sensors;
 import 'dart:math' as math;
 
 import 'package:syncfusion_flutter_charts/charts.dart';
-import 'package:syncfusion_flutter_charts/sparkcharts.dart';
+
+import 'package:wall_smash/TrpzSum.dart';
 
 void main() {
   runApp(const MyApp());
@@ -60,7 +59,13 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
 
   double textShownOnScreenDown = 0.0;
-  double rotationX = 0.0, rotationY = 0.0 , rotationZ = 0.0;
+
+  TrpzSum rotationX = TrpzSum(0.01);
+  TrpzSum rotationY = TrpzSum(0.01);
+  TrpzSum rotationZ = TrpzSum(0.01);
+
+  int totalReceivedSample = 0;
+  //double rotationX = 0.0, rotationY = 0.0 , rotationZ = 0.0;
 
   List<double> xSamplesList = [];
   List<double> ySamplesList = [1 , 2 , 0];
@@ -85,34 +90,18 @@ class _MyHomePageState extends State<MyHomePage> {
       );
     });
 
-    sensors.gyroscopeEventStream(samplingPeriod: const Duration(microseconds: 10)).listen((event) {
-      setState(() {
-        rotationX += event.x;
-        rotationY += event.y;
-        rotationZ += event.z;
-        //_fillChartData();
-         //xSamplesList[];
-        // ySamplesList.add(rotationY);
-        // zSamplesList.add(rotationZ);
-        //
-        // if(xSamplesList.length >= 500) {
-        //   xSamplesList.removeAt(0);
-        // }
-
-        // if(ySamplesList.length >= 500) {
-        //   ySamplesList.removeAt(0);
-        // }
-        //
-        // if(zSamplesList.length >= 500) {
-        //   zSamplesList.removeAt(0);
-        // }
-      }
-      );
+    sensors.gyroscopeEventStream(samplingPeriod: const Duration(milliseconds: 10)).listen((event) {
+      rotationX.addSample(event.x * 180 / 3.1416);
+      rotationY.addSample(event.y * 180 / 3.1416);
+      rotationZ.addSample(event.z * 180 / 3.1416);
+      totalReceivedSample ++;
     });
-    
 
-
-
+    Timer.periodic(const Duration(seconds: 1),
+            (timer) {
+          setState(() {
+          });
+        });
   }
   List<LineSeries<_ChartData, num>> _getDefaultLineSeries(){
     return <LineSeries<_ChartData,num>> [
@@ -172,9 +161,12 @@ class _MyHomePageState extends State<MyHomePage> {
               series: _getDefaultLineSeries(),
             ),
             Text(
-              "x: ${rotationX.toStringAsFixed(4)}, "
-                  " y: ${rotationY.toStringAsFixed(4)},"
-                  "  z: ${rotationZ.toStringAsFixed(4)}"
+              "x: ${rotationX.getSumValue().toStringAsFixed(4)}, "
+                  " y: ${rotationY.getSumValue().toStringAsFixed(4)},"
+                  "  z: ${rotationZ.getSumValue().toStringAsFixed(4)}"
+            ),
+            Text(
+                totalReceivedSample.toString()
             ),
             Text(
               //_accelerometerEvent?.x.toStringAsFixed(3) ?? 'eshanki',
